@@ -49,7 +49,20 @@ export async function createProject(input: {
     throw new Error(error.message);
   }
 
-  return data as Project;
+  // After creating the project, add the owner to project_members.
+  const created = data as Project;
+  const { error: memberErr } = await supabase.from("project_members").insert({
+    project_id: created.id,
+    user_id: ownerId,
+    role: "owner",
+  });
+
+  if (memberErr) {
+    // Not fatal; log for visibility.
+    console.error("Error inserting owner membership:", memberErr);
+  }
+
+  return created;
 }
 
 /**
